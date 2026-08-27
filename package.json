@@ -1,0 +1,83 @@
+{
+  "name": "@anonyjcy/dsh-plugin-mobile-touch",
+  "version": "1.0.0",
+  "description": "Mobile & iPad touch optimization plugin for DeepSeek Harness Web GUI with WebKit fast-tap bypass, hover delay elimination, and responsive touch feedback",
+  "author": "AnonyJcy",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "bin": {
+    "dsh-touch-adapt": "bin/cli.js",
+    "dsh-mobile-touch": "bin/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AnonyJcy/dsh-plugin-mobile-touch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AnonyJcy/dsh-plugin-mobile-touch/issues"
+  },
+  "homepage": "https://github.com/AnonyJcy/dsh-plugin-mobile-touch#readme",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/client/index.ts",
+      "default": "./src/client/index.ts"
+    },
+    "./installer": {
+      "types": "./src/installer.ts",
+      "default": "./src/installer.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "files": [
+    "src",
+    "bin",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "touch",
+    "ipad",
+    "mobile",
+    "fastclick",
+    "tap",
+    "cordis-plugin",
+    "web-ui"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=3.0.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^3.0.0",
+    "jsdom": "^29.1.1",
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "status": "node bin/cli.js status",
+    "install:plugin": "node bin/cli.js install",
+    "uninstall:plugin": "node bin/cli.js uninstall",
+    "verify": "node bin/cli.js verify"
+  }
+}

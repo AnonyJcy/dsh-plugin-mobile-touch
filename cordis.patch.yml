@@ -1,0 +1,6 @@
+# @anonyjcy/dsh-plugin-mobile-touch cordis patch
+# Automatically mounts the touch & iPad optimizer into the DSH web profile.
+
+- insert:
+    - id: plugin-mobile-touch
+      name: '@anonyjcy/dsh-plugin-mobile-touch'
