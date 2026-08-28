@@ -1,6 +1,6 @@
 {
   "name": "@anonyjcy/dsh-plugin-mobile-touch",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Mobile & iPad touch optimization plugin for DeepSeek Harness Web GUI with WebKit fast-tap bypass, hover delay elimination, and responsive touch feedback",
   "author": "AnonyJcy",
   "license": "MIT",
@@ -27,10 +27,6 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./client": {
-      "types": "./src/client/index.ts",
-      "default": "./src/client/index.ts"
-    },
     "./installer": {
       "types": "./src/installer.ts",
       "default": "./src/installer.ts"
@@ -40,9 +36,6 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
-    },
-    "client": {
-      "platform": "web"
     }
   },
   "files": [
