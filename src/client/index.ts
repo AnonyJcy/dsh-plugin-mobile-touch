@@ -5,10 +5,12 @@
  */
 
 import { isTouchDevice, watchTouchCapability } from './detector.ts'
+import { installFocusGuard, uninstallFocusGuard } from './focus-guard.ts'
 import { TouchEngine, type TouchEngineOptions } from './touch-engine.ts'
 import { injectTouchStyles, removeTouchStyles } from './touch-styles.ts'
 
 export { isTouchDevice, watchTouchCapability } from './detector.ts'
+export { installFocusGuard, uninstallFocusGuard } from './focus-guard.ts'
 export { TouchEngine, type TouchEngineOptions } from './touch-engine.ts'
 export { injectTouchStyles, removeTouchStyles, TOUCH_ACTIVE_CLASS, TOUCH_OPTIMIZATION_CLASS } from './touch-styles.ts'
 
@@ -35,6 +37,7 @@ export function initTouchOptimizer(config: TouchOptimizerConfig = {}): () => voi
       activeEngine.stop()
       activeEngine = null
     }
+    uninstallFocusGuard()
     removeTouchStyles()
     return () => {}
   }
@@ -43,6 +46,7 @@ export function initTouchOptimizer(config: TouchOptimizerConfig = {}): () => voi
 
   const activate = () => {
     injectTouchStyles()
+    installFocusGuard()
     if (!activeEngine?.isRunning()) {
       activeEngine = new TouchEngine(config)
       activeEngine.start()
@@ -54,6 +58,7 @@ export function initTouchOptimizer(config: TouchOptimizerConfig = {}): () => voi
       activeEngine.stop()
       activeEngine = null
     }
+    uninstallFocusGuard()
     removeTouchStyles()
   }
 

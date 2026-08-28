@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { isTouchDevice, watchTouchCapability } from '../src/client/detector.ts'
+import { installFocusGuard, uninstallFocusGuard } from '../src/client/focus-guard.ts'
 import { TouchEngine } from '../src/client/touch-engine.ts'
-import { injectTouchStyles, removeTouchStyles, TOUCH_OPTIMIZATION_CLASS } from '../src/client/touch-styles.ts'
+import { injectTouchStyles, removeTouchStyles, TOUCH_ACTIVE_CLASS, TOUCH_OPTIMIZATION_CLASS } from '../src/client/touch-styles.ts'
 import { initTouchOptimizer } from '../src/client/index.ts'
 
 describe('detector', () => {
@@ -67,65 +68,87 @@ describe('TouchEngine', () => {
     document.body.innerHTML = ''
   })
 
-  it('dispatches fast-tap click on button', () => {
+  it('adds active class on touchstart and removes on touchend', () => {
     const button = document.createElement('button')
-    const clicked = vi.fn()
-    button.addEventListener('click', clicked)
     document.body.appendChild(button)
 
-    const engine = new TouchEngine({ maxTapDurationMs: 300 })
+    const engine = new TouchEngine()
     engine.start()
     expect(engine.isRunning()).toBe(true)
 
-    // Simulate clean tap
+    // Touch start
     const touchStart = new TouchEvent('touchstart', {
       touches: [{ clientX: 100, clientY: 100, identifier: 1, target: button } as any],
     })
     document.dispatchEvent(touchStart)
+    expect(button.classList.contains(TOUCH_ACTIVE_CLASS)).toBe(true)
 
+    // Touch end
     const touchEnd = new TouchEvent('touchend', {
       touches: [],
     })
     document.dispatchEvent(touchEnd)
 
-    expect(clicked).toHaveBeenCalled()
-
     engine.stop()
     expect(engine.isRunning()).toBe(false)
   })
 
-  it('cancels tap when user scrolls past threshold', () => {
+  it('clears active feedback when user scrolls', () => {
     const button = document.createElement('button')
-    const clicked = vi.fn()
-    button.addEventListener('click', clicked)
     document.body.appendChild(button)
 
-    const engine = new TouchEngine({ tapThresholdPx: 10 })
+    const engine = new TouchEngine({ scrollThresholdPx: 5 })
     engine.start()
 
-    // Start at 100,100
     document.dispatchEvent(new TouchEvent('touchstart', {
       touches: [{ clientX: 100, clientY: 100, identifier: 1, target: button } as any],
     }))
+    expect(button.classList.contains(TOUCH_ACTIVE_CLASS)).toBe(true)
 
-    // Move to 100,150 (50px scroll)
+    // Scroll 20px
     document.dispatchEvent(new TouchEvent('touchmove', {
-      touches: [{ clientX: 100, clientY: 150, identifier: 1, target: button } as any],
+      touches: [{ clientX: 100, clientY: 120, identifier: 1, target: button } as any],
     }))
+    expect(button.classList.contains(TOUCH_ACTIVE_CLASS)).toBe(false)
 
-    // End touch
-    document.dispatchEvent(new TouchEvent('touchend', {
-      touches: [],
-    }))
-
-    expect(clicked).not.toHaveBeenCalled()
     engine.stop()
+  })
+})
+
+describe('FocusGuard', () => {
+  beforeEach(() => {
+    uninstallFocusGuard()
+    document.body.innerHTML = ''
+  })
+
+  it('suppresses programmatic textarea auto-focus without direct user touch', () => {
+    installFocusGuard()
+    const textarea = document.createElement('textarea')
+    document.body.appendChild(textarea)
+
+    const focusSpy = vi.fn()
+    // Original prototype call will be tested via activeElement
+    textarea.focus()
+    expect(document.activeElement).not.toBe(textarea)
+
+    // User touches directly
+    const touchEvent = new TouchEvent('touchstart', {
+      bubbles: true,
+      touches: [{ clientX: 50, clientY: 50, target: textarea } as any],
+    })
+    textarea.dispatchEvent(touchEvent)
+
+    textarea.focus()
+    expect(document.activeElement).toBe(textarea)
+
+    uninstallFocusGuard()
   })
 })
 
 describe('initTouchOptimizer', () => {
   beforeEach(() => {
     removeTouchStyles()
+    uninstallFocusGuard()
   })
 
   it('initializes and cleans up with force: true', () => {

@@ -9,7 +9,7 @@ describe('plugin-mobile-touch', () => {
   it('builds valid boot script and injection', () => {
     const script = buildBootScript()
     expect(script).toContain('dsh-touch-optimized')
-    expect(script).toContain('touch-action: manipulation')
+    expect(script).toContain('touch-action: pan-y manipulation')
 
     const injection = bootTouchInjection()
     expect(injection.kind).toBe('script')

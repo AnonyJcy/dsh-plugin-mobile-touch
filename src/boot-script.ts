@@ -21,30 +21,27 @@ export function buildBootScript(): string {
 html.\${TOUCH_OPT_CLASS} {
   -webkit-tap-highlight-color: transparent !important;
 }
+html.\${TOUCH_OPT_CLASS} *,
+html.\${TOUCH_OPT_CLASS} [data-scroll],
+html.\${TOUCH_OPT_CLASS} .scrollable {
+  -webkit-overflow-scrolling: touch;
+}
 html.\${TOUCH_OPT_CLASS} button,
 html.\${TOUCH_OPT_CLASS} [role="button"],
-html.\${TOUCH_OPT_CLASS} a,
-html.\${TOUCH_OPT_CLASS} input[type="button"],
-html.\${TOUCH_OPT_CLASS} input[type="submit"],
-html.\${TOUCH_OPT_CLASS} input[type="reset"],
+html.\${TOUCH_OPT_CLASS} [role="treeitem"],
 html.\${TOUCH_OPT_CLASS} [role="tab"],
 html.\${TOUCH_OPT_CLASS} [role="menuitem"],
 html.\${TOUCH_OPT_CLASS} [role="option"],
-html.\${TOUCH_OPT_CLASS} [role="switch"],
-html.\${TOUCH_OPT_CLASS} summary,
-html.\${TOUCH_OPT_CLASS} [data-interactive="true"] {
-  touch-action: manipulation !important;
+html.\${TOUCH_OPT_CLASS} a,
+html.\${TOUCH_OPT_CLASS} summary {
+  touch-action: pan-y manipulation !important;
   -webkit-tap-highlight-color: transparent !important;
   user-select: none;
   -webkit-user-select: none;
 }
-html.\${TOUCH_OPT_CLASS} * {
-  -webkit-overflow-scrolling: touch;
-}
 html.\${TOUCH_OPT_CLASS} .\${TOUCH_ACTIVE_CLASS} {
-  opacity: 0.72 !important;
-  transform: scale(0.97) !important;
-  transition: transform 0.06s cubic-bezier(0.2, 0, 0.2, 1), opacity 0.06s cubic-bezier(0.2, 0, 0.2, 1) !important;
+  opacity: 0.75 !important;
+  transition: opacity 0.05s ease-out !important;
 }
 html.\${TOUCH_OPT_CLASS} input[type="text"],
 html.\${TOUCH_OPT_CLASS} input[type="search"],
@@ -80,11 +77,59 @@ html.\${TOUCH_OPT_CLASS} [contenteditable="true"] {
     if (el) el.remove();
   }
 
-  const SELECTORS = 'button, [role="button"], a, input[type="button"], input[type="submit"], input[type="reset"], input[type="checkbox"], input[type="radio"], [role="tab"], [role="menuitem"], [role="option"], [role="switch"], summary, [data-interactive="true"], [data-touch-tap="true"]';
+  // Soft keyboard auto-popup guard (prevents programmatic focus on session switch)
+  let lastDirectTouchTime = 0;
+  let lastDirectTouchTarget = null;
+  let guardInstalled = false;
+
+  function onDirectTouch(e) {
+    if (e.target instanceof HTMLElement) {
+      lastDirectTouchTarget = e.target;
+      lastDirectTouchTime = Date.now();
+    }
+  }
+
+  function installFocusGuard() {
+    if (guardInstalled) return;
+    guardInstalled = true;
+
+    document.addEventListener('touchstart', onDirectTouch, { capture: true, passive: true });
+    document.addEventListener('pointerdown', onDirectTouch, { capture: true, passive: true });
+
+    if (typeof HTMLTextAreaElement !== 'undefined') {
+      const origTextareaFocus = HTMLTextAreaElement.prototype.focus;
+      HTMLTextAreaElement.prototype.focus = function(options) {
+        const isDirect = (Date.now() - lastDirectTouchTime < 400) &&
+          (lastDirectTouchTarget === this || this.contains(lastDirectTouchTarget));
+        const isAlready = document.activeElement === this;
+        if (isDirect || isAlready) {
+          origTextareaFocus.call(this, options);
+        }
+      };
+    }
+
+    if (typeof HTMLInputElement !== 'undefined') {
+      const origInputFocus = HTMLInputElement.prototype.focus;
+      HTMLInputElement.prototype.focus = function(options) {
+        const type = (this.type || '').toLowerCase();
+        const isTextInput = type === 'text' || type === 'search' || type === 'password' || type === 'email' || type === 'url';
+        if (!isTextInput) {
+          origInputFocus.call(this, options);
+          return;
+        }
+        const isDirect = (Date.now() - lastDirectTouchTime < 400) &&
+          (lastDirectTouchTarget === this || this.contains(lastDirectTouchTarget));
+        const isAlready = document.activeElement === this;
+        if (isDirect || isAlready) {
+          origInputFocus.call(this, options);
+        }
+      };
+    }
+  }
+
+  const SELECTORS = 'button, [role="button"], [role="treeitem"], [role="tab"], [role="menuitem"], [role="option"], a, summary';
 
   let activeTouch = null;
-  let lastFastTapTime = 0;
-  let lastFastTapTarget = null;
   let isRunning = false;
 
   function onTouchStart(e) {
@@ -108,11 +153,8 @@ html.\${TOUCH_OPT_CLASS} [contenteditable="true"] {
     activeTouch = {
       startX: touch.clientX,
       startY: touch.clientY,
-      startTime: Date.now(),
-      target,
       interactive: interactive || null,
       identifier: touch.identifier,
-      isScroll: false
     };
   }
 
@@ -122,47 +164,17 @@ html.\${TOUCH_OPT_CLASS} [contenteditable="true"] {
     if (!touch) return;
     const dx = Math.abs(touch.clientX - activeTouch.startX);
     const dy = Math.abs(touch.clientY - activeTouch.startY);
-    if (dx > 10 || dy > 10) {
-      activeTouch.isScroll = true;
-      if (activeTouch.interactive) {
-        activeTouch.interactive.classList.remove(TOUCH_ACTIVE_CLASS);
-      }
+    if (dx > 6 || dy > 6) {
+      resetTouch();
     }
   }
 
-  function onTouchEnd(e) {
-    if (!activeTouch) return;
-    const { interactive, isScroll, startTime } = activeTouch;
-    const duration = Date.now() - startTime;
-
-    if (interactive) {
-      setTimeout(() => { interactive.classList.remove(TOUCH_ACTIVE_CLASS); }, 70);
-    }
-
-    if (!isScroll && duration <= 350 && interactive) {
-      const now = Date.now();
-      lastFastTapTime = now;
-      lastFastTapTarget = interactive;
-
-      const isInput = interactive.tagName === 'INPUT' || interactive.tagName === 'SELECT' || interactive.tagName === 'TEXTAREA';
-      if (!isInput) {
-        interactive.focus && interactive.focus();
-        interactive.click();
-      }
+  function onTouchEnd() {
+    if (activeTouch && activeTouch.interactive) {
+      const el = activeTouch.interactive;
+      setTimeout(() => { el.classList.remove(TOUCH_ACTIVE_CLASS); }, 60);
     }
     activeTouch = null;
-  }
-
-  function onTouchCancel() {
-    resetTouch();
-  }
-
-  function onClickCapture(e) {
-    const now = Date.now();
-    if (lastFastTapTarget && now - lastFastTapTime < 350 && (e.target === lastFastTapTarget || lastFastTapTarget.contains(e.target))) {
-      lastFastTapTime = 0;
-      lastFastTapTarget = null;
-    }
   }
 
   function resetTouch() {
@@ -176,21 +188,20 @@ html.\${TOUCH_OPT_CLASS} [contenteditable="true"] {
     if (isRunning) return;
     isRunning = true;
     injectStyles();
-    document.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
-    document.addEventListener('touchmove', onTouchMove, { passive: true, capture: true });
-    document.addEventListener('touchend', onTouchEnd, { passive: false, capture: true });
-    document.addEventListener('touchcancel', onTouchCancel, { passive: true, capture: true });
-    document.addEventListener('click', onClickCapture, { capture: true });
+    installFocusGuard();
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: true });
+    document.addEventListener('touchend', onTouchEnd, { passive: true });
+    document.addEventListener('touchcancel', onTouchEnd, { passive: true });
   }
 
   function stop() {
     if (!isRunning) return;
     isRunning = false;
-    document.removeEventListener('touchstart', onTouchStart, { capture: true });
-    document.removeEventListener('touchmove', onTouchMove, { capture: true });
-    document.removeEventListener('touchend', onTouchEnd, { capture: true });
-    document.removeEventListener('touchcancel', onTouchCancel, { capture: true });
-    document.removeEventListener('click', onClickCapture, { capture: true });
+    document.removeEventListener('touchstart', onTouchStart);
+    document.removeEventListener('touchmove', onTouchMove);
+    document.removeEventListener('touchend', onTouchEnd);
+    document.removeEventListener('touchcancel', onTouchEnd);
     removeStyles();
     resetTouch();
   }
