@@ -1,5 +1,6 @@
 # 📱 dsh-plugin-mobile-touch
 
+[![DSH Market Listed](https://raw.githubusercontent.com/2BingLing/dsh-market/master/assets/readme/badge-listed-zh.svg)](https://dsh.market/?q=AnonyJcy%2Fdsh-plugin-mobile-touch)
 [![npm version](https://img.shields.io/npm/v/@anonyjcy/dsh-plugin-mobile-touch.svg?color=blue)](https://www.npmjs.com/package/@anonyjcy/dsh-plugin-mobile-touch)
 [![GitHub release](https://img.shields.io/github/v/release/AnonyJcy/dsh-plugin-mobile-touch?color=blue)](https://github.com/AnonyJcy/dsh-plugin-mobile-touch/releases)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
