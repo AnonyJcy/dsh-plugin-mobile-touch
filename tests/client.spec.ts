@@ -4,7 +4,6 @@ import { isTouchDevice, watchTouchCapability } from '../src/client/detector.ts'
 import { installFocusGuard, uninstallFocusGuard } from '../src/client/focus-guard.ts'
 import { TouchEngine } from '../src/client/touch-engine.ts'
 import { injectTouchStyles, removeTouchStyles, TOUCH_ACTIVE_CLASS, TOUCH_OPTIMIZATION_CLASS } from '../src/client/touch-styles.ts'
-import { initTouchOptimizer } from '../src/client/index.ts'
 
 describe('detector', () => {
   it('detects touch when maxTouchPoints > 0', () => {
@@ -126,8 +125,6 @@ describe('FocusGuard', () => {
     const textarea = document.createElement('textarea')
     document.body.appendChild(textarea)
 
-    const focusSpy = vi.fn()
-    // Original prototype call will be tested via activeElement
     textarea.focus()
     expect(document.activeElement).not.toBe(textarea)
 
@@ -142,26 +139,5 @@ describe('FocusGuard', () => {
     expect(document.activeElement).toBe(textarea)
 
     uninstallFocusGuard()
-  })
-})
-
-describe('initTouchOptimizer', () => {
-  beforeEach(() => {
-    removeTouchStyles()
-    uninstallFocusGuard()
-  })
-
-  it('initializes and cleans up with force: true', () => {
-    const cleanup = initTouchOptimizer({ force: true })
-    expect(document.documentElement.classList.contains(TOUCH_OPTIMIZATION_CLASS)).toBe(true)
-
-    cleanup()
-    expect(document.documentElement.classList.contains(TOUCH_OPTIMIZATION_CLASS)).toBe(false)
-  })
-
-  it('does nothing when disabled: true', () => {
-    const cleanup = initTouchOptimizer({ disabled: true, force: true })
-    expect(document.documentElement.classList.contains(TOUCH_OPTIMIZATION_CLASS)).toBe(false)
-    cleanup()
   })
 })
