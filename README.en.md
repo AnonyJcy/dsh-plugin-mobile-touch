@@ -1,6 +1,6 @@
 # 📱 dsh-plugin-mobile-touch
 
-[![npm version](https://img.shields.io/npm/v/@anonyjcy/dsh-plugin-mobile-touch.svg?color=blue)](https://www.npmjs.com/package/@anonyjcy/dsh-plugin-mobile-touch)
+[![GitHub release](https://img.shields.io/github/v/release/AnonyJcy/dsh-plugin-mobile-touch?color=blue)](https://github.com/AnonyJcy/dsh-plugin-mobile-touch/releases)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 [简体中文](README.md) | **English Version**
@@ -49,7 +49,7 @@ When running modern Web apps (such as DeepSeek Harness Web GUI) on iPad (Safari/
 
 ## 🚀 Installation & Deployment
 
-### Option 1: Direct Local Clone (Recommended for Local Development)
+### Option 1: Direct Local Clone (Recommended currently)
 
 ```bash
 git clone https://github.com/AnonyJcy/dsh-plugin-mobile-touch.git
@@ -62,16 +62,10 @@ node bin/cli.js install
 node bin/cli.js status
 ```
 
-### Option 2: via npm / pnpm
+### Option 2: via npm / pnpm (Available after npm publishing)
 
 ```bash
-# npm
 npm install -D @anonyjcy/dsh-plugin-mobile-touch
-
-# pnpm
-pnpm add -D @anonyjcy/dsh-plugin-mobile-touch
-
-# Mount via CLI
 npx @anonyjcy/dsh-plugin-mobile-touch install
 ```
 

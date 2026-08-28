@@ -1,6 +1,6 @@
 # 📱 dsh-plugin-mobile-touch
 
-[![npm version](https://img.shields.io/npm/v/@anonyjcy/dsh-plugin-mobile-touch.svg?color=blue)](https://www.npmjs.com/package/@anonyjcy/dsh-plugin-mobile-touch)
+[![GitHub release](https://img.shields.io/github/v/release/AnonyJcy/dsh-plugin-mobile-touch?color=blue)](https://github.com/AnonyJcy/dsh-plugin-mobile-touch/releases)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **简体中文** | [English Version](README.en.md)
@@ -49,7 +49,7 @@
 
 ## 🚀 安装与部署
 
-### 方式一：克隆仓库直接安装（推荐本地开发使用）
+### 方式一：克隆仓库直接安装（当前推荐，本地使用）
 
 ```bash
 git clone https://github.com/AnonyJcy/dsh-plugin-mobile-touch.git
@@ -62,16 +62,10 @@ node bin/cli.js install
 node bin/cli.js status
 ```
 
-### 方式二：通过 npm / pnpm 安装
+### 方式二：通过 npm 发布包安装（待发布至 npm 官方 Registry 后可用）
 
 ```bash
-# npm 安装
 npm install -D @anonyjcy/dsh-plugin-mobile-touch
-
-# pnpm 安装
-pnpm add -D @anonyjcy/dsh-plugin-mobile-touch
-
-# 运行 CLI 一键挂载
 npx @anonyjcy/dsh-plugin-mobile-touch install
 ```
 
