@@ -1,6 +1,6 @@
 /**
  * Touch styles injected on mobile and touch-enabled devices.
- * Ensures natural momentum scrolling, eliminates hover latency, and provides tactile feedback.
+ * Disables iOS page-level pull-to-refresh rubberbanding and enables smooth momentum scrolling.
  * @module @anonyjcy/dsh-plugin-mobile-touch/touch-styles
  */
 
@@ -12,18 +12,37 @@ export const TOUCH_ACTIVE_CLASS = 'dsh-touch-active'
  */
 export const TOUCH_CSS = `
 /* DeepSeek Harness Touch & Mobile Optimization Styles */
-html.${TOUCH_OPTIMIZATION_CLASS} {
+
+/* 1. Disable Safari page-level pull-to-refresh and body rubberbanding */
+html.${TOUCH_OPTIMIZATION_CLASS},
+html.${TOUCH_OPTIMIZATION_CLASS} body {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* Ensure smooth native momentum scrolling on all scrollable regions */
+/* 2. Ensure momentum kinetic scrolling on all internal regions */
 html.${TOUCH_OPTIMIZATION_CLASS} *,
 html.${TOUCH_OPTIMIZATION_CLASS} [data-scroll],
 html.${TOUCH_OPTIMIZATION_CLASS} .scrollable {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Allow vertical panning across all elements so scrolling is never trapped or hindered */
+/* 3. Contain overscroll inside scrollable panels (sidebar, workspace tree, chat history) */
+html.${TOUCH_OPTIMIZATION_CLASS} aside,
+html.${TOUCH_OPTIMIZATION_CLASS} nav,
+html.${TOUCH_OPTIMIZATION_CLASS} main,
+html.${TOUCH_OPTIMIZATION_CLASS} section,
+html.${TOUCH_OPTIMIZATION_CLASS} [style*="overflow"],
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="list"],
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="scroll"],
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="root"] {
+  overscroll-behavior: contain !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+}
+
+/* 4. Interactive controls allow vertical pan so drag-scrolling is never blocked */
 html.${TOUCH_OPTIMIZATION_CLASS} button,
 html.${TOUCH_OPTIMIZATION_CLASS} [role="button"],
 html.${TOUCH_OPTIMIZATION_CLASS} [role="treeitem"],
@@ -32,19 +51,19 @@ html.${TOUCH_OPTIMIZATION_CLASS} [role="menuitem"],
 html.${TOUCH_OPTIMIZATION_CLASS} [role="option"],
 html.${TOUCH_OPTIMIZATION_CLASS} a,
 html.${TOUCH_OPTIMIZATION_CLASS} summary {
-  touch-action: pan-y manipulation !important;
+  touch-action: pan-y !important;
   -webkit-tap-highlight-color: transparent !important;
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* Instant tactile feedback on touch */
+/* 5. Instant tactile feedback on touch */
 html.${TOUCH_OPTIMIZATION_CLASS} .${TOUCH_ACTIVE_CLASS} {
   opacity: 0.75 !important;
   transition: opacity 0.05s ease-out !important;
 }
 
-/* Text inputs and textareas remain fully selectable and vertically pannable */
+/* 6. Text inputs and textareas remain fully selectable and vertically pannable */
 html.${TOUCH_OPTIMIZATION_CLASS} input[type="text"],
 html.${TOUCH_OPTIMIZATION_CLASS} input[type="search"],
 html.${TOUCH_OPTIMIZATION_CLASS} input[type="password"],

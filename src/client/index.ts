@@ -5,6 +5,82 @@
  * @module @anonyjcy/dsh-plugin-mobile-touch/client
  */
 
+import { isTouchDevice, watchTouchCapability } from './detector.ts'
+import { installFocusGuard, uninstallFocusGuard } from './focus-guard.ts'
+import { TouchEngine, type TouchEngineOptions } from './touch-engine.ts'
+import { injectTouchStyles, removeTouchStyles } from './touch-styles.ts'
+
+export { isTouchDevice, watchTouchCapability } from './detector.ts'
+export { installFocusGuard, uninstallFocusGuard } from './focus-guard.ts'
+export { TouchEngine, type TouchEngineOptions } from './touch-engine.ts'
+export { injectTouchStyles, removeTouchStyles, TOUCH_ACTIVE_CLASS, TOUCH_OPTIMIZATION_CLASS } from './touch-styles.ts'
+
+export interface TouchOptimizerConfig extends TouchEngineOptions {
+  force?: boolean
+  disabled?: boolean
+}
+
+let activeEngine: TouchEngine | null = null
+let unwatch: (() => void) | null = null
+
+export function initTouchOptimizer(config: TouchOptimizerConfig = {}): () => void {
+  if (config.disabled) {
+    if (activeEngine) {
+      activeEngine.stop()
+      activeEngine = null
+    }
+    uninstallFocusGuard()
+    removeTouchStyles()
+    return () => {}
+  }
+
+  const shouldActivate = config.force || isTouchDevice()
+
+  const activate = () => {
+    injectTouchStyles()
+    installFocusGuard()
+    if (!activeEngine?.isRunning()) {
+      activeEngine = new TouchEngine(config)
+      activeEngine.start()
+    }
+  }
+
+  const deactivate = () => {
+    if (activeEngine) {
+      activeEngine.stop()
+      activeEngine = null
+    }
+    uninstallFocusGuard()
+    removeTouchStyles()
+  }
+
+  if (shouldActivate) {
+    activate()
+  }
+
+  if (!config.force) {
+    unwatch = watchTouchCapability((isTouch) => {
+      if (isTouch) {
+        activate()
+      } else {
+        deactivate()
+      }
+    })
+  }
+
+  return () => {
+    if (unwatch) {
+      unwatch()
+      unwatch = null
+    }
+    deactivate()
+  }
+}
+
+export function apply(): void {
+  initTouchOptimizer()
+}
+
 if (typeof window !== 'undefined' && window.__ModuleLoader__) {
   window.__ModuleLoader__.load({
     id: "@anonyjcy/dsh-plugin-mobile-touch",
@@ -16,13 +92,28 @@ if (typeof window !== 'undefined' && window.__ModuleLoader__) {
       const STYLE_ID = 'dsh-touch-optimization-styles';
 
       const TOUCH_CSS = `
-html.${TOUCH_OPT_CLASS} {
+html.${TOUCH_OPT_CLASS},
+html.${TOUCH_OPT_CLASS} body {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 html.${TOUCH_OPT_CLASS} *,
 html.${TOUCH_OPT_CLASS} [data-scroll],
 html.${TOUCH_OPT_CLASS} .scrollable {
   -webkit-overflow-scrolling: touch;
+}
+html.${TOUCH_OPT_CLASS} aside,
+html.${TOUCH_OPT_CLASS} nav,
+html.${TOUCH_OPT_CLASS} main,
+html.${TOUCH_OPT_CLASS} section,
+html.${TOUCH_OPT_CLASS} [style*="overflow"],
+html.${TOUCH_OPT_CLASS} [class*="list"],
+html.${TOUCH_OPT_CLASS} [class*="scroll"],
+html.${TOUCH_OPT_CLASS} [class*="root"] {
+  overscroll-behavior: contain !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
 }
 html.${TOUCH_OPT_CLASS} button,
 html.${TOUCH_OPT_CLASS} [role="button"],
@@ -32,7 +123,7 @@ html.${TOUCH_OPT_CLASS} [role="menuitem"],
 html.${TOUCH_OPT_CLASS} [role="option"],
 html.${TOUCH_OPT_CLASS} a,
 html.${TOUCH_OPT_CLASS} summary {
-  touch-action: pan-y manipulation !important;
+  touch-action: pan-y !important;
   -webkit-tap-highlight-color: transparent !important;
   user-select: none;
   -webkit-user-select: none;
@@ -52,7 +143,7 @@ html.${TOUCH_OPT_CLASS} [contenteditable="true"] {
 }
 `;
 
-      function isTouchDevice() {
+      function isTouchDeviceLocal() {
         if (typeof window === 'undefined') return false;
         const hasCoarse = window.matchMedia && (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(hover: none)').matches);
         const hasTouchPoints = typeof navigator !== 'undefined' && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 0;
@@ -89,7 +180,7 @@ html.${TOUCH_OPT_CLASS} [contenteditable="true"] {
         }
       }
 
-      function installFocusGuard() {
+      function installFocusGuardLocal() {
         if (guardInstalled || typeof document === 'undefined') return;
         guardInstalled = true;
 
@@ -188,28 +279,28 @@ html.${TOUCH_OPT_CLASS} [contenteditable="true"] {
         if (isRunning || typeof document === 'undefined') return;
         isRunning = true;
         injectStyles();
-        installFocusGuard();
+        installFocusGuardLocal();
         document.addEventListener('touchstart', onTouchStart, { passive: true });
         document.addEventListener('touchmove', onTouchMove, { passive: true });
         document.addEventListener('touchend', onTouchEnd, { passive: true });
         document.addEventListener('touchcancel', onTouchEnd, { passive: true });
       }
 
-      if (isTouchDevice()) {
+      if (isTouchDeviceLocal()) {
         start();
       }
 
       if (typeof window !== 'undefined' && window.matchMedia) {
         const mq = window.matchMedia('(pointer: coarse)');
         const handleMQ = (ev) => {
-          if (ev.matches || isTouchDevice()) start();
+          if (ev.matches || isTouchDeviceLocal()) start();
         };
         if (mq.addEventListener) mq.addEventListener('change', handleMQ);
         else if (mq.addListener) mq.addListener(handleMQ);
       }
 
       exports.apply = function(ctx) {
-        if (isTouchDevice()) {
+        if (isTouchDeviceLocal()) {
           start();
         }
       };
@@ -217,4 +308,9 @@ html.${TOUCH_OPT_CLASS} [contenteditable="true"] {
       return exports;
     }
   });
+}
+
+export default {
+  apply,
+  initTouchOptimizer,
 }

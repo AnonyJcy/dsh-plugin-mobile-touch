@@ -18,13 +18,28 @@ export function buildBootScript(): string {
   const STYLE_ID = 'dsh-touch-optimization-styles';
 
   const TOUCH_CSS = \`
-html.\${TOUCH_OPT_CLASS} {
+html.\${TOUCH_OPT_CLASS},
+html.\${TOUCH_OPT_CLASS} body {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 html.\${TOUCH_OPT_CLASS} *,
 html.\${TOUCH_OPT_CLASS} [data-scroll],
 html.\${TOUCH_OPT_CLASS} .scrollable {
   -webkit-overflow-scrolling: touch;
+}
+html.\${TOUCH_OPT_CLASS} aside,
+html.\${TOUCH_OPT_CLASS} nav,
+html.\${TOUCH_OPT_CLASS} main,
+html.\${TOUCH_OPT_CLASS} section,
+html.\${TOUCH_OPT_CLASS} [style*="overflow"],
+html.\${TOUCH_OPT_CLASS} [class*="list"],
+html.\${TOUCH_OPT_CLASS} [class*="scroll"],
+html.\${TOUCH_OPT_CLASS} [class*="root"] {
+  overscroll-behavior: contain !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
 }
 html.\${TOUCH_OPT_CLASS} button,
 html.\${TOUCH_OPT_CLASS} [role="button"],
@@ -34,7 +49,7 @@ html.\${TOUCH_OPT_CLASS} [role="menuitem"],
 html.\${TOUCH_OPT_CLASS} [role="option"],
 html.\${TOUCH_OPT_CLASS} a,
 html.\${TOUCH_OPT_CLASS} summary {
-  touch-action: pan-y manipulation !important;
+  touch-action: pan-y !important;
   -webkit-tap-highlight-color: transparent !important;
   user-select: none;
   -webkit-user-select: none;
