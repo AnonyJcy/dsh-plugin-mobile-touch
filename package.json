@@ -1,6 +1,6 @@
 {
   "name": "@anonyjcy/dsh-plugin-mobile-touch",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Mobile & iPad touch optimization plugin for DeepSeek Harness Web GUI with WebKit fast-tap bypass, hover delay elimination, and responsive touch feedback",
   "author": "AnonyJcy",
   "license": "MIT",
