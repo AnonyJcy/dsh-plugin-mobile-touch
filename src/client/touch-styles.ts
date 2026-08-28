@@ -1,81 +1,87 @@
 /**
  * Touch styles injected on mobile and touch-enabled devices.
- * Disables iOS page-level pull-to-refresh rubberbanding and enables smooth momentum scrolling.
  * @module @anonyjcy/dsh-plugin-mobile-touch/touch-styles
  */
 
 export const TOUCH_OPTIMIZATION_CLASS = 'dsh-touch-optimized'
 export const TOUCH_ACTIVE_CLASS = 'dsh-touch-active'
+export const STYLE_ID = 'dsh-touch-optimization-styles'
 
 /**
  * CSS text injected for touch & iPad optimization.
  */
 export const TOUCH_CSS = `
-/* DeepSeek Harness Touch & Mobile Optimization Styles */
-
-/* 1. Disable Safari page-level pull-to-refresh and body rubberbanding */
+/* 1. Viewport lock: prevent whole-page rubberband bounce */
 html.${TOUCH_OPTIMIZATION_CLASS},
 html.${TOUCH_OPTIMIZATION_CLASS} body {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
   overscroll-behavior: none !important;
   overscroll-behavior-y: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* 2. Ensure momentum kinetic scrolling on all internal regions */
+/* 2. Neutralize HTML5 drag interference on touch */
 html.${TOUCH_OPTIMIZATION_CLASS} *,
-html.${TOUCH_OPTIMIZATION_CLASS} [data-scroll],
-html.${TOUCH_OPTIMIZATION_CLASS} .scrollable {
-  -webkit-overflow-scrolling: touch;
+[draggable] {
+  -webkit-user-drag: none !important;
+  user-drag: none !important;
+  -webkit-touch-callout: none !important;
 }
 
-/* 3. Contain overscroll inside scrollable panels (sidebar, workspace tree, chat history) */
-html.${TOUCH_OPTIMIZATION_CLASS} aside,
-html.${TOUCH_OPTIMIZATION_CLASS} nav,
-html.${TOUCH_OPTIMIZATION_CLASS} main,
-html.${TOUCH_OPTIMIZATION_CLASS} section,
-html.${TOUCH_OPTIMIZATION_CLASS} [style*="overflow"],
-html.${TOUCH_OPTIMIZATION_CLASS} [class*="list"],
-html.${TOUCH_OPTIMIZATION_CLASS} [class*="scroll"],
-html.${TOUCH_OPTIMIZATION_CLASS} [class*="root"] {
+/* 3. Sidebar list scrolling & accurate native scrollbar */
+html.${TOUCH_OPTIMIZATION_CLASS} [role="tree"],
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="list"] {
+  -webkit-overflow-scrolling: touch !important;
+  overflow-y: auto !important;
   overscroll-behavior: contain !important;
-  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+  padding-bottom: 48px !important;
+  scrollbar-gutter: auto !important;
+  --dsh-scrollbar-thumb: rgba(140, 140, 145, 0.45) !important;
+  --dsh-scrollbar-thumb-hover: rgba(140, 140, 145, 0.75) !important;
+  scrollbar-color: rgba(140, 140, 145, 0.45) transparent !important;
+  scrollbar-width: thin !important;
+}
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="list"]::-webkit-scrollbar,
+html.${TOUCH_OPTIMIZATION_CLASS} [role="tree"]::-webkit-scrollbar {
+  display: block !important;
+  width: 4px !important;
+}
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="list"]::-webkit-scrollbar-track,
+html.${TOUCH_OPTIMIZATION_CLASS} [role="tree"]::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="list"]::-webkit-scrollbar-thumb,
+html.${TOUCH_OPTIMIZATION_CLASS} [role="tree"]::-webkit-scrollbar-thumb {
+  border-radius: 4px !important;
+  background: rgba(140, 140, 145, 0.45) !important;
+}
+
+/* 4. Allow vertical pan on all list children */
+html.${TOUCH_OPTIMIZATION_CLASS} [role="tree"] *,
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="list"] *,
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="sessionRow"],
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="projectRow"] {
   touch-action: pan-y !important;
 }
 
-/* 4. Interactive controls allow vertical pan so drag-scrolling is never blocked */
-html.${TOUCH_OPTIMIZATION_CLASS} button,
-html.${TOUCH_OPTIMIZATION_CLASS} [role="button"],
-html.${TOUCH_OPTIMIZATION_CLASS} [role="treeitem"],
-html.${TOUCH_OPTIMIZATION_CLASS} [role="tab"],
-html.${TOUCH_OPTIMIZATION_CLASS} [role="menuitem"],
-html.${TOUCH_OPTIMIZATION_CLASS} [role="option"],
-html.${TOUCH_OPTIMIZATION_CLASS} a,
-html.${TOUCH_OPTIMIZATION_CLASS} summary {
-  touch-action: pan-y !important;
-  -webkit-tap-highlight-color: transparent !important;
-  user-select: none;
-  -webkit-user-select: none;
+/* 5. Hide bottom masking fade gradient */
+html.${TOUCH_OPTIMIZATION_CLASS} [class*="fade"] {
+  display: none !important;
 }
 
-/* 5. Instant tactile feedback on touch */
-html.${TOUCH_OPTIMIZATION_CLASS} .${TOUCH_ACTIVE_CLASS} {
-  opacity: 0.75 !important;
+/* 6. Button and interactive element press feedback */
+html.${TOUCH_OPTIMIZATION_CLASS} button:active,
+html.${TOUCH_OPTIMIZATION_CLASS} [role="button"]:active,
+html.${TOUCH_OPTIMIZATION_CLASS} [role="treeitem"]:active {
+  opacity: 0.72 !important;
   transition: opacity 0.05s ease-out !important;
 }
-
-/* 6. Text inputs and textareas remain fully selectable and vertically pannable */
-html.${TOUCH_OPTIMIZATION_CLASS} input[type="text"],
-html.${TOUCH_OPTIMIZATION_CLASS} input[type="search"],
-html.${TOUCH_OPTIMIZATION_CLASS} input[type="password"],
-html.${TOUCH_OPTIMIZATION_CLASS} textarea,
-html.${TOUCH_OPTIMIZATION_CLASS} [contenteditable="true"] {
-  user-select: text !important;
-  -webkit-user-select: text !important;
-  touch-action: pan-y !important;
-}
 `
-
-const STYLE_ELEMENT_ID = 'dsh-touch-optimization-styles'
 
 /**
  * Inject touch styles into document head.
@@ -85,10 +91,10 @@ export function injectTouchStyles(): void {
 
   document.documentElement.classList.add(TOUCH_OPTIMIZATION_CLASS)
 
-  let styleEl = document.getElementById(STYLE_ELEMENT_ID) as HTMLStyleElement | null
+  let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null
   if (!styleEl) {
     styleEl = document.createElement('style')
-    styleEl.id = STYLE_ELEMENT_ID
+    styleEl.id = STYLE_ID
     styleEl.textContent = TOUCH_CSS
     document.head.appendChild(styleEl)
   }
@@ -101,7 +107,7 @@ export function removeTouchStyles(): void {
   if (typeof document === 'undefined') return
 
   document.documentElement.classList.remove(TOUCH_OPTIMIZATION_CLASS)
-  const styleEl = document.getElementById(STYLE_ELEMENT_ID)
+  const styleEl = document.getElementById(STYLE_ID)
   if (styleEl) {
     styleEl.remove()
   }
